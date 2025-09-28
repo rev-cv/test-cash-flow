@@ -2,6 +2,7 @@ import { mount } from "svelte";
 import "./reset.css";
 import "./color.css";
 import App from "./App.svelte";
+import "./actions/scrollLock";
 
 const app = mount(App, {
     target: document.getElementById("app"),

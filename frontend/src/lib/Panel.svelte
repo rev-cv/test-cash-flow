@@ -3,6 +3,7 @@
         allTypesStore,
         allStatusStore,
         allCatStore,
+        allCatLevelStore,
         allSortStore,
     } from "../store";
 
@@ -20,46 +21,25 @@
     const day = String(today.getDate()).padStart(2, "0");
     const date = `${year}-${month}-${day}`;
 
-    let allTypes = $state($allTypesStore);
-    let allStatus = $state($allStatusStore);
-    let allCat = $state($allCatStore);
-    let allSort = $state($allSortStore);
-    let currentCat = $state(1);
+    // let currentCat = $state(1);
 
-    let isType = $derived(allTypes.some((el) => el.isActive));
-    let isStat = $derived(allStatus.some((el) => el.isActive));
-    let isCat = $derived(allCat.some((el) => el.isActive));
-    let isSort = $derived(allSort.some((el) => el.isActive));
+    let isType = $derived($allTypesStore.some((el) => el.isActive));
+    let isStat = $derived($allStatusStore.some((el) => el.isActive));
+    let isCat = $derived($allCatStore.some((el) => el.isActive));
+    let isSort = $derived($allSortStore.some((el) => el.isActive));
 
-    let allCategoryOne = $derived(
-        allCat?.filter((elem) => elem.parent === 0) || [],
-    );
+    // let allCategoryOne = $derived(
+    //     $allCatStore?.filter((elem) => elem.parent === 0) || [],
+    // );
 
-    let allCategoryTwo = $derived(
-        allCat?.filter((elem) => elem.parent === currentCat) || [],
-    );
-
-    $effect(() => {
-        allTypes = $allTypesStore;
-    });
-
-    $effect(() => {
-        allStatus = $allStatusStore;
-    });
-
-    $effect(() => {
-        allCat = $allCatStore;
-    });
-
-    $effect(() => {
-        allSort = $allSortStore;
-    });
+    // let allCategoryTwo = $derived(
+    //     $allCatStore?.filter((elem) => elem.parent === currentCat) || [],
+    // );
 
     function updateFilters(store, elemID) {
         store.update((value) =>
             value.map((elem) => {
                 if (elem.id === elemID) {
-                    console.log(elem.id, elemID);
                     return { ...elem, isActive: !elem.isActive };
                 }
                 return elem;
@@ -98,7 +78,7 @@
         isActive={isType}
     >
         <div class="scroll">
-            {#each allTypes as t (t.id)}
+            {#each $allTypesStore as t (t.id)}
                 <button
                     class="point"
                     class:active={t.isActive}
@@ -119,7 +99,7 @@
         isActive={isStat}
     >
         <div class="scroll">
-            {#each allStatus as t (t.id)}
+            {#each $allStatusStore as t (t.id)}
                 <button
                     class="point"
                     class:active={t.isActive}
@@ -139,7 +119,8 @@
         onOpen={() => {}}
         isActive={isCat}
     >
-        <div class="category-panel">
+        <!-- <div class="category-panel">
+            
             <div class="left">
                 {#each allCategoryOne as t (t.id)}
                     <button
@@ -160,6 +141,25 @@
                     </button>
                 {/each}
             </div>
+        </div> -->
+
+        <div class="scroll">
+            {#each $allCatLevelStore as t (t.id)}
+                <button
+                    class="point"
+                    class:active={t.isActive}
+                    onclick={() => updateFilters(allCatStore, t.id)}
+                    >{t.name}
+                </button>
+                {#each t.children as ch (ch.id)}
+                    <button
+                        class="point cp2"
+                        class:active={ch.isActive}
+                        onclick={() => updateFilters(allCatStore, ch.id)}
+                        >{ch.name}
+                    </button>
+                {/each}
+            {/each}
         </div>
     </Filter>
 
@@ -175,7 +175,7 @@
         isActive={isSort}
     >
         <div class="scroll">
-            {#each allSort as t (t.id)}
+            {#each $allSortStore as t (t.id)}
                 <button
                     class="point"
                     class:active={t.isActive}
@@ -218,7 +218,6 @@
     }
 
     .point {
-        // background-color: rgba($color: #000, $alpha: 0.1);
         display: flex;
         justify-content: start;
         align-items: center;
@@ -228,6 +227,7 @@
         user-select: none;
         position: relative;
         color: var(--color-dark-charcoal);
+        white-space: nowrap;
 
         &:hover {
             background-color: rgba($color: #000, $alpha: 0.08);
@@ -259,6 +259,10 @@
 
         &.active::before {
             scale: 1;
+        }
+
+        &.cp2 {
+            margin-left: 2em;
         }
     }
 
@@ -295,47 +299,5 @@
         display: flex;
         flex-direction: column;
         gap: 0.3em;
-    }
-
-    .category-panel {
-        min-height: 30vh;
-
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-
-        width: 500px;
-
-        .right,
-        .left {
-            overflow: hidden;
-            max-height: 30vh;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 0.3em;
-        }
-
-        .left {
-            padding-right: calc(0.5em - 1px);
-        }
-
-        .right {
-            padding-left: 0.5em;
-            border-left: 1px solid rgba($color: #000000, $alpha: 0.2);
-        }
-
-        .left .point {
-            padding-left: 1em;
-
-            &::after,
-            &::before {
-                display: none;
-            }
-
-            &.active {
-                background-color: var(--color-dark-charcoal);
-                color: var(--color-basic-white);
-            }
-        }
     }
 </style>

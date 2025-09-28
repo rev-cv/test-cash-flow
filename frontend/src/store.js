@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+import { writable, derived } from "svelte/store";
 
 export const allTypesStore = writable([
     { name: "Пополнение", id: 1, isActive: false },
@@ -18,13 +18,96 @@ export const allCatStore = writable([
     { name: "Маркетинг", id: 4, isActive: false, parent: 0 },
     { name: "Farpost", id: 5, isActive: false, parent: 4 },
     { name: "Avito", id: 6, isActive: true, parent: 4 },
+
+    { name: "Разработка", id: 7, isActive: false, parent: 0 },
+    { name: "Frontend", id: 8, isActive: true, parent: 7 },
+    { name: "Backend", id: 9, isActive: false, parent: 7 },
+    { name: "Мобильная разработка", id: 10, isActive: false, parent: 7 },
+    { name: "Базы данных", id: 11, isActive: false, parent: 7 },
+    { name: "Тестирование", id: 12, isActive: false, parent: 7 },
+
+    { name: "Финансы", id: 13, isActive: true, parent: 0 },
+    { name: "Бухгалтерия", id: 14, isActive: false, parent: 13 },
+    { name: "Налоги", id: 15, isActive: false, parent: 13 },
+    { name: "Инвестиции", id: 16, isActive: true, parent: 13 },
+    { name: "Кредиты", id: 17, isActive: false, parent: 13 },
+    { name: "Страхование", id: 18, isActive: false, parent: 13 },
+
+    { name: "HR и Кадры", id: 19, isActive: false, parent: 0 },
+    { name: "Подбор персонала", id: 20, isActive: false, parent: 19 },
+    { name: "Обучение", id: 21, isActive: true, parent: 19 },
+    { name: "Адаптация", id: 22, isActive: false, parent: 19 },
+    { name: "Мотивация", id: 23, isActive: false, parent: 19 },
+
+    { name: "Продажи", id: 24, isActive: false, parent: 0 },
+    { name: "Холодные звонки", id: 25, isActive: false, parent: 24 },
+    { name: "CRM", id: 26, isActive: true, parent: 24 },
+    { name: "B2B", id: 27, isActive: false, parent: 24 },
+    { name: "B2C", id: 28, isActive: false, parent: 24 },
+
+    { name: "Дизайн", id: 29, isActive: true, parent: 0 },
+    { name: "UX/UI", id: 30, isActive: true, parent: 29 },
+    { name: "Графический дизайн", id: 31, isActive: false, parent: 29 },
+    { name: "Веб-дизайн", id: 32, isActive: false, parent: 29 },
+    { name: "Айдентика", id: 33, isActive: false, parent: 29 },
+
+    { name: "Контент", id: 34, isActive: false, parent: 0 },
+    { name: "Копирайтинг", id: 35, isActive: true, parent: 34 },
+    { name: "Редактура", id: 36, isActive: false, parent: 34 },
+    { name: "Видео", id: 37, isActive: false, parent: 34 },
+    { name: "Фото", id: 38, isActive: false, parent: 34 },
+
+    { name: "Логистика", id: 39, isActive: false, parent: 0 },
+    { name: "Склады", id: 40, isActive: false, parent: 39 },
+    { name: "Транспорт", id: 41, isActive: false, parent: 39 },
+    { name: "Таможня", id: 42, isActive: false, parent: 39 },
+
+    { name: "Безопасность", id: 43, isActive: true, parent: 0 },
+    { name: "Информационная", id: 44, isActive: false, parent: 43 },
+    { name: "Физическая", id: 45, isActive: false, parent: 43 },
+    { name: "Аудит", id: 46, isActive: false, parent: 43 },
+
+    { name: "Документооборот", id: 47, isActive: false, parent: 0 },
+    { name: "Электронный", id: 48, isActive: true, parent: 47 },
+    { name: "Архив", id: 49, isActive: false, parent: 47 },
+
+    { name: "Обслуживание", id: 50, isActive: false, parent: 0 },
+    { name: "Клиенты", id: 51, isActive: false, parent: 50 },
+    { name: "Оборудование", id: 52, isActive: true, parent: 50 },
+
+    { name: "Образование", id: 57, isActive: false, parent: 0 },
+    { name: "Онлайн-курсы", id: 58, isActive: true, parent: 57 },
+    { name: "Вебинары", id: 59, isActive: false, parent: 57 },
+    { name: "Саморазвитие", id: 60, isActive: false, parent: 57 },
 ]);
+
+export const allCatLevelStore = derived(allCatStore, ($allCat) => {
+    const parents = $allCat.filter((cat) => cat.parent === 0);
+    return parents.map((parent) => ({
+        name: parent.name,
+        id: parent.id,
+        isActive: parent.isActive,
+        children: $allCat
+            .filter((cat) => cat.parent === parent.id)
+            .map((child) => ({
+                name: child.name,
+                id: child.id,
+                isActive: child.isActive,
+            })),
+    }));
+});
 
 export const allSortStore = writable([
     { name: "реверс", id: 4, isActive: true },
     { name: "по сумме", id: 1, isActive: false },
     { name: "по дате", id: 2, isActive: true },
 ]);
+
+export const isOpenModalStore = writable({
+    transferID: null,
+    isView: false,
+    isMounted: false,
+});
 
 export const transferStore = writable([
     {
@@ -33,16 +116,7 @@ export const transferStore = writable([
         status: { name: "Личное", id: 2 },
         sum: 5000,
         mark: { name: "Расход", id: 2 },
-        cat: [
-            {
-                name: "Дом",
-                id: 2,
-                sub: [
-                    { name: "Продукты", id: 7 },
-                    { name: "Оплата ЖКХ", id: 8 },
-                ],
-            },
-        ],
+        cat: [],
         comment: "Еженедельные покупки продуктов",
     },
     {
@@ -52,11 +126,8 @@ export const transferStore = writable([
         sum: 150000,
         mark: { name: "Пополнение", id: 1 },
         cat: [
-            {
-                name: "Маркетинг",
-                id: 3,
-                sub: [{ name: "Реклама в соцсетях", id: 9 }],
-            },
+            { name: "Вебинары", id: 59, isActive: false, parent: 57 },
+            { name: "Саморазвитие", id: 60, isActive: false, parent: 57 },
         ],
         comment: "Оплата рекламной кампании",
     },
@@ -67,11 +138,9 @@ export const transferStore = writable([
         sum: 1200,
         mark: { name: "Расход", id: 2 },
         cat: [
-            {
-                name: "Транспорт",
-                id: 4,
-                sub: [{ name: "Такси", id: 10 }],
-            },
+            { name: "Обслуживание", id: 50, isActive: false, parent: 0 },
+            { name: "Клиенты", id: 51, isActive: false, parent: 50 },
+            { name: "Оборудование", id: 52, isActive: true, parent: 50 },
         ],
         comment: "Поездка на работу",
     },
@@ -82,11 +151,10 @@ export const transferStore = writable([
         sum: 75000,
         mark: { name: "Пополнение", id: 1 },
         cat: [
-            {
-                name: "Инфраструктура",
-                id: 1,
-                sub: [{ name: "VPS", id: 3 }],
-            },
+            { name: "Безопасность", id: 43, isActive: true, parent: 0 },
+            { name: "Информационная", id: 44, isActive: false, parent: 43 },
+            { name: "Физическая", id: 45, isActive: false, parent: 43 },
+            { name: "Аудит", id: 46, isActive: false, parent: 43 },
         ],
         comment: "Оплата хостинга на полгода",
     },
@@ -97,14 +165,10 @@ export const transferStore = writable([
         sum: 8000,
         mark: { name: "Расход", id: 2 },
         cat: [
-            {
-                name: "Развлечения",
-                id: 5,
-                sub: [
-                    { name: "Кино", id: 11 },
-                    { name: "Рестораны", id: 12 },
-                ],
-            },
+            { name: "Безопасность", id: 43, isActive: true, parent: 0 },
+            { name: "Информационная", id: 44, isActive: false, parent: 43 },
+            { name: "Физическая", id: 45, isActive: false, parent: 43 },
+            { name: "Аудит", id: 46, isActive: false, parent: 43 },
         ],
         comment: "Поход в кино и ужин",
     },
@@ -115,11 +179,9 @@ export const transferStore = writable([
         sum: 50000,
         mark: { name: "Пополнение", id: 1 },
         cat: [
-            {
-                name: "Продажи",
-                id: 6,
-                sub: [{ name: "Онлайн-продажа", id: 13 }],
-            },
+            { name: "Редактура", id: 36, isActive: false, parent: 34 },
+            { name: "Видео", id: 37, isActive: false, parent: 34 },
+            { name: "Фото", id: 38, isActive: false, parent: 34 },
         ],
         comment: "Оплата за проданный курс",
     },
@@ -130,11 +192,9 @@ export const transferStore = writable([
         sum: 6500,
         mark: { name: "Расход", id: 2 },
         cat: [
-            {
-                name: "Одежда",
-                id: 7,
-                sub: [{ name: "Повседневная", id: 14 }],
-            },
+            { name: "Редактура", id: 36, isActive: false, parent: 34 },
+            { name: "Видео", id: 37, isActive: false, parent: 34 },
+            { name: "Фото", id: 38, isActive: false, parent: 34 },
         ],
         comment: "Покупка куртки",
     },
@@ -145,11 +205,9 @@ export const transferStore = writable([
         sum: 25000,
         mark: { name: "Пополнение", id: 1 },
         cat: [
-            {
-                name: "Консультации",
-                id: 8,
-                sub: [{ name: "Личная консультация", id: 15 }],
-            },
+            { name: "Редактура", id: 36, isActive: false, parent: 34 },
+            { name: "Видео", id: 37, isActive: false, parent: 34 },
+            { name: "Фото", id: 38, isActive: false, parent: 34 },
         ],
         comment: "Оплата за часовую консультацию",
     },
@@ -160,11 +218,9 @@ export const transferStore = writable([
         sum: 300,
         mark: { name: "Расход", id: 2 },
         cat: [
-            {
-                name: "Кофе",
-                id: 9,
-                sub: [{ name: "Утренний кофе", id: 16 }],
-            },
+            { name: "Редактура", id: 36, isActive: false, parent: 34 },
+            { name: "Видео", id: 37, isActive: false, parent: 34 },
+            { name: "Фото", id: 38, isActive: false, parent: 34 },
         ],
         comment: "Кофе на вынос",
     },
@@ -175,11 +231,9 @@ export const transferStore = writable([
         sum: 12000,
         mark: { name: "Расход", id: 2 },
         cat: [
-            {
-                name: "Инфраструктура",
-                id: 1,
-                sub: [{ name: "Proxy", id: 5 }],
-            },
+            { name: "Редактура", id: 36, isActive: false, parent: 34 },
+            { name: "Видео", id: 37, isActive: false, parent: 34 },
+            { name: "Фото", id: 38, isActive: false, parent: 34 },
         ],
         comment: "Продление прокси-серверов",
     },
@@ -190,11 +244,9 @@ export const transferStore = writable([
         sum: 1500,
         mark: { name: "Расход", id: 2 },
         cat: [
-            {
-                name: "Спорт",
-                id: 10,
-                sub: [{ name: "Абонемент", id: 17 }],
-            },
+            { name: "Редактура", id: 36, isActive: false, parent: 34 },
+            { name: "Видео", id: 37, isActive: false, parent: 34 },
+            { name: "Фото", id: 38, isActive: false, parent: 34 },
         ],
         comment: "Оплата месячного абонемента в спортзал",
     },
@@ -205,11 +257,9 @@ export const transferStore = writable([
         sum: 200000,
         mark: { name: "Пополнение", id: 1 },
         cat: [
-            {
-                name: "Разработка",
-                id: 11,
-                sub: [{ name: "Создание сайта", id: 18 }],
-            },
+            { name: "Редактура", id: 36, isActive: false, parent: 34 },
+            { name: "Видео", id: 37, isActive: false, parent: 34 },
+            { name: "Фото", id: 38, isActive: false, parent: 34 },
         ],
         comment: "Оплата за разработку нового сайта",
     },
@@ -220,20 +270,9 @@ export const transferStore = writable([
         sum: 4500,
         mark: { name: "Расход", id: 2 },
         cat: [
-            {
-                name: "Здоровье",
-                id: 12,
-                sub: [
-                    { name: "Витамины", id: 1229 },
-                    { name: "Витамины", id: 139 },
-                    { name: "Витамины", id: 10009 },
-                ],
-            },
-            {
-                name: "Здоровье",
-                id: 199,
-                sub: [{ name: "Витамины", id: 19 }],
-            },
+            { name: "Редактура", id: 36, isActive: false, parent: 34 },
+            { name: "Видео", id: 37, isActive: false, parent: 34 },
+            { name: "Фото", id: 38, isActive: false, parent: 34 },
         ],
         comment: "Покупка витаминов",
     },
@@ -244,11 +283,9 @@ export const transferStore = writable([
         sum: 10000,
         mark: { name: "Расход", id: 2 },
         cat: [
-            {
-                name: "Офис",
-                id: 13,
-                sub: [{ name: "Канцтовары", id: 20 }],
-            },
+            { name: "Редактура", id: 36, isActive: false, parent: 34 },
+            { name: "Видео", id: 37, isActive: false, parent: 34 },
+            { name: "Фото", id: 38, isActive: false, parent: 34 },
         ],
         comment: "Закупка канцтоваров для офиса",
     },
@@ -259,11 +296,9 @@ export const transferStore = writable([
         sum: 700,
         mark: { name: "Расход", id: 2 },
         cat: [
-            {
-                name: "Транспорт",
-                id: 4,
-                sub: [{ name: "Проездной", id: 21 }],
-            },
+            { name: "Редактура", id: 36, isActive: false, parent: 34 },
+            { name: "Видео", id: 37, isActive: false, parent: 34 },
+            { name: "Фото", id: 38, isActive: false, parent: 34 },
         ],
         comment: "Покупка месячного проездного",
     },
@@ -274,11 +309,9 @@ export const transferStore = writable([
         sum: 30000,
         mark: { name: "Пополнение", id: 1 },
         cat: [
-            {
-                name: "Фриланс",
-                id: 14,
-                sub: [{ name: "Копирайтинг", id: 22 }],
-            },
+            { name: "Редактура", id: 36, isActive: false, parent: 34 },
+            { name: "Видео", id: 37, isActive: false, parent: 34 },
+            { name: "Фото", id: 38, isActive: false, parent: 34 },
         ],
         comment: "Оплата за написание текстов",
     },
@@ -289,11 +322,9 @@ export const transferStore = writable([
         sum: 2000,
         mark: { name: "Расход", id: 2 },
         cat: [
-            {
-                name: "Книги",
-                id: 15,
-                sub: [{ name: "Художественная литература", id: 23 }],
-            },
+            { name: "Редактура", id: 36, isActive: false, parent: 34 },
+            { name: "Видео", id: 37, isActive: false, parent: 34 },
+            { name: "Фото", id: 38, isActive: false, parent: 34 },
         ],
         comment: "Покупка нескольких книг",
     },
@@ -304,11 +335,9 @@ export const transferStore = writable([
         sum: 45000,
         mark: { name: "Пополнение", id: 1 },
         cat: [
-            {
-                name: "Консультации",
-                id: 8,
-                sub: [{ name: "Групповая консультация", id: 24 }],
-            },
+            { name: "Редактура", id: 36, isActive: false, parent: 34 },
+            { name: "Видео", id: 37, isActive: false, parent: 34 },
+            { name: "Фото", id: 38, isActive: false, parent: 34 },
         ],
         comment: "Оплата за участие в групповом тренинге",
     },
@@ -319,11 +348,9 @@ export const transferStore = writable([
         sum: 250,
         mark: { name: "Расход", id: 2 },
         cat: [
-            {
-                name: "Продукты",
-                id: 7,
-                sub: [{ name: "Сладости", id: 25 }],
-            },
+            { name: "Редактура", id: 36, isActive: false, parent: 34 },
+            { name: "Видео", id: 37, isActive: false, parent: 34 },
+            { name: "Фото", id: 38, isActive: false, parent: 34 },
         ],
         comment: "Покупка шоколада",
     },
@@ -334,12 +361,18 @@ export const transferStore = writable([
         sum: 60000,
         mark: { name: "Расход", id: 2 },
         cat: [
-            {
-                name: "Маркетинг",
-                id: 3,
-                sub: [{ name: "Услуги SMM-специалиста", id: 26 }],
-            },
+            { name: "Редактура", id: 36, isActive: false, parent: 34 },
+            { name: "Видео", id: 37, isActive: false, parent: 34 },
+            { name: "Фото", id: 38, isActive: false, parent: 34 },
         ],
         comment: "Ежемесячная оплата услуг SMM-менеджера",
     },
 ]);
+
+export const currentEditingTransfer = derived(
+    [transferStore, isOpenModalStore],
+    ([$transfers, $modal]) => {
+        if ($modal.transferID < 0) return null;
+        return $transfers.find((t) => t.id === $modal.transferID);
+    }
+);

@@ -1,7 +1,14 @@
 <script>
-    import { transferStore } from "../store";
+    import { transferStore, isOpenModalStore } from "../store";
     import { gateString } from "../utils/date";
-    let transfers = $state($transferStore);
+
+    function openItem(tans) {
+        isOpenModalStore.update(() => ({
+            transferID: tans.id,
+            isView: false,
+            isMounted: true,
+        }));
+    }
 </script>
 
 <div class="transfer-list">
@@ -13,22 +20,19 @@
         <div>теги</div>
         <div>комментарий</div>
     </div>
-    {#each transfers as t (t.id)}
-        <div class="item">
+    {#each $transferStore as t (t.id)}
+        <button class="item" onclick={() => openItem(t)}>
             <div class="dt">{gateString(t.created)}</div>
             <div class="sm">{t.sum.toLocaleString("ru-RU") || "-"} ₽</div>
             <div class="mk">{t.mark?.name || "-"}</div>
             <div class="st">{t.status?.name || "-"}</div>
             <div>
                 {#each t.cat as cat (cat.id)}
-                    <div class="ct1">{cat.name || "-"}</div>
-                    {#each cat?.sub as scat (scat.id)}
-                        <div class="ct2">{scat.name}</div>
-                    {/each}
+                    <div>{cat.name || "-"}</div>
                 {/each}
             </div>
             <div class="cm">{t.comment}</div>
-        </div>
+        </button>
     {/each}
 </div>
 
@@ -85,6 +89,7 @@
 
             > div {
                 font-size: 0.8em;
+                text-align: left;
             }
 
             .dt {
@@ -92,40 +97,14 @@
             }
 
             .cm {
-                // grid-column: 1 / -1;
                 color: var(--color-dark-charcoal-70);
                 line-height: 1.1em;
-            }
-
-            .ct2 {
-                padding-left: 1em;
-                position: relative;
-                transform: translateX(0.3em);
-
-                &::before {
-                    content: "";
-                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 20v-5C4 8.925 8.925 4 15 4h5'/%3E%3C/svg%3E");
-                    background-repeat: no-repeat no-repeat;
-                    background-position: center center;
-                    background-size: cover;
-                    width: 0.9em;
-                    height: 0.9em;
-                    position: absolute;
-                    left: 0;
-                    top: 50%;
-                    transform: translateY(-80%) rotate(-90deg);
-                    opacity: 0.5;
-                }
             }
 
             &:hover {
                 outline-color: var(--color-dark-charcoal);
                 border-radius: 6px;
             }
-
-            // .sum {
-            //     font-weight: 600;
-            // }
         }
     }
 </style>
