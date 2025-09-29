@@ -5,7 +5,11 @@
         allCatStore,
         allCatLevelStore,
         allSortStore,
+        dateFilter,
+        isOpenModalStore,
     } from "../store";
+    import { getDateForInput } from "../utils/date";
+    import { loadTransferFiters } from "../api/loadTransferFiters";
 
     import Filter from "./Filter.svelte";
     import SVGDate from "../assets/SVGDate.svelte";
@@ -14,27 +18,13 @@
     import SVGType from "../assets/SVGType.svelte";
     import SVGSort from "../assets/SVGSort.svelte";
     import SVGStart from "../assets/SVGStart.svelte";
+    import SVGAdd from "../assets/SVGAdd.svelte";
 
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    const date = `${year}-${month}-${day}`;
-
-    // let currentCat = $state(1);
-
+    let isDate = $derived($dateFilter[0] || $dateFilter[1] ? true : false);
     let isType = $derived($allTypesStore.some((el) => el.isActive));
     let isStat = $derived($allStatusStore.some((el) => el.isActive));
     let isCat = $derived($allCatStore.some((el) => el.isActive));
     let isSort = $derived($allSortStore.some((el) => el.isActive));
-
-    // let allCategoryOne = $derived(
-    //     $allCatStore?.filter((elem) => elem.parent === 0) || [],
-    // );
-
-    // let allCategoryTwo = $derived(
-    //     $allCatStore?.filter((elem) => elem.parent === currentCat) || [],
-    // );
 
     function updateFilters(store, elemID) {
         store.update((value) =>
@@ -47,24 +37,62 @@
         );
     }
 
+    function updateDate(event, isStart = false) {
+        const ds = event.currentTarget.value;
+        if (!ds) return;
+        const dateObject = new Date(ds + "T00:00:00Z");
+
+        dateFilter.update((value) => {
+            if (isStart) {
+                return [getDateForInput(dateObject), value[1]];
+            }
+            return [value[0], getDateForInput(dateObject)];
+        });
+    }
+
     function removeFilter(store) {
         store.update((value) =>
             value.map((elem) => ({ ...elem, isActive: false })),
         );
     }
+
+    function openNewTransfer() {
+        isOpenModalStore.update((value) => ({
+            ...value,
+            transferID: -1,
+            isMounted: true,
+        }));
+    }
 </script>
 
 <div class="panel">
+    <button class="new-transfer" onclick={openNewTransfer}><SVGAdd /></button>
+
+    <div class="line"></div>
+
     <Filter
         name="время перевода"
         title="Переводы за период"
         svg={SVGDate}
-        onDelete={() => {}}
-        onStart={() => {}}
+        onDelete={() => dateFilter.set(["", ""])}
+        onStart={() => loadTransferFiters()}
+        isActive={isDate}
     >
         <div class="scroll">
-            <input type="date" name="" id="date-start" value={date} />
-            <input type="date" name="" id="date-end" value={date} />
+            <input
+                type="date"
+                name=""
+                id="date-start"
+                value={$dateFilter[0]}
+                onchange={(e) => updateDate(e, true)}
+            />
+            <input
+                type="date"
+                name=""
+                id="date-end"
+                value={$dateFilter[1]}
+                onchange={(e) => updateDate(e, false)}
+            />
         </div>
     </Filter>
 
@@ -73,7 +101,7 @@
         title="Фильтровать по типу перевода"
         svg={SVGType}
         onDelete={() => removeFilter(allTypesStore)}
-        onStart={() => {}}
+        onStart={() => loadTransferFiters()}
         onOpen={() => {}}
         isActive={isType}
     >
@@ -94,7 +122,7 @@
         title="Фильтровать по статусу перевода"
         svg={SVGStatus}
         onDelete={() => removeFilter(allStatusStore)}
-        onStart={() => {}}
+        onStart={() => loadTransferFiters()}
         onOpen={() => {}}
         isActive={isStat}
     >
@@ -115,34 +143,10 @@
         title="Фильтровать по категориям"
         svg={SVGTags}
         onDelete={() => removeFilter(allCatStore)}
-        onStart={() => {}}
+        onStart={() => loadTransferFiters()}
         onOpen={() => {}}
         isActive={isCat}
     >
-        <!-- <div class="category-panel">
-            
-            <div class="left">
-                {#each allCategoryOne as t (t.id)}
-                    <button
-                        class="point"
-                        class:active={t.id === currentCat}
-                        onclick={() => (currentCat = t.id)}
-                        >{t.name}
-                    </button>
-                {/each}
-            </div>
-            <div class="right">
-                {#each allCategoryTwo as t (t.id)}
-                    <button
-                        class="point"
-                        class:active={t.isActive}
-                        onclick={() => updateFilters(allCatStore, t.id)}
-                        >{t.name}
-                    </button>
-                {/each}
-            </div>
-        </div> -->
-
         <div class="scroll">
             {#each $allCatLevelStore as t (t.id)}
                 <button
@@ -170,7 +174,7 @@
         title="Сортировать"
         svg={SVGSort}
         onDelete={() => removeFilter(allSortStore)}
-        onStart={() => {}}
+        onStart={() => loadTransferFiters()}
         onOpen={() => {}}
         isActive={isSort}
     >
@@ -188,7 +192,7 @@
 
     <div class="line"></div>
 
-    <button class="start"><SVGStart /></button>
+    <button class="start" onclick={loadTransferFiters}><SVGStart /></button>
 </div>
 
 <style lang="scss">
@@ -278,7 +282,8 @@
         }
     }
 
-    .start {
+    .start,
+    .new-transfer {
         display: flex;
         justify-content: center;
         align-items: center;

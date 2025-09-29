@@ -1,0 +1,27 @@
+meta {
+  name: get all transfers with filters
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://127.0.0.1:8000/api/transfers/
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "dates": ["", ""],
+    "marks": [9],
+    "statuses": [],
+    "categories": [],
+    "is_reverse": false,
+    "sort_by_date": false,
+    "sort_by_sum": true
+  }
+}
+
+settings {
+  encodeUrl: true
+}

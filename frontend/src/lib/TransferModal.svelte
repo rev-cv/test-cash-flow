@@ -7,14 +7,27 @@
         allCatLevelStore,
         allCatStore,
         currentEditingTransfer,
+        newEditingTransfer,
     } from "../store";
     import SVGList from "../assets/SVGList.svelte";
     import SVGAdd from "../assets/SVGAdd.svelte";
     import { getDateForInput } from "../utils/date";
+    import { updateTransfer } from "../api/updateTransfer";
+    import { createTransfer } from "../api/createTransfer";
+    import { removeTransfer } from "../api/removeTransfer";
 
-    let transfer = $state($currentEditingTransfer);
+    let isNewTransfer = $derived(
+        $isOpenModalStore.transferID < 0 ? true : false,
+    );
+
+    let transfer = $derived(
+        $isOpenModalStore.transferID < 0
+            ? $newEditingTransfer
+            : $currentEditingTransfer,
+    );
 
     let isNotMounted = $state(false);
+    let isBlockSaved = $state(false);
 
     let activeAside = $state(null); // 'status', 'mark', 'cat', или null
     let inputNewTem = $state("");
@@ -24,6 +37,7 @@
     });
 
     $effect(() => {
+        // открытие модального окна
         setTimeout(() => {
             isOpenModalStore.update((value) => ({ ...value, isView: true }));
             isNotMounted = true;
@@ -31,7 +45,11 @@
     });
 
     $effect(() => {
+        // закрытие модального окна и обновление трансфера
         if (!$isOpenModalStore.isView && isNotMounted) {
+            if (!isNewTransfer) {
+                updateTransfer(transfer.id);
+            }
             setTimeout(() => {
                 isOpenModalStore.update((value) => ({
                     ...value,
@@ -51,74 +69,138 @@
     }
 
     function updateMark(newMark) {
-        transferStore.update((value) => {
-            const newValue = value.map((el) => {
-                if (el.id === transfer.id) {
-                    return { ...el, mark: { ...newMark } };
-                }
-                return el;
+        if (isNewTransfer) {
+            newEditingTransfer.update((value) => ({
+                ...value,
+                mark: { ...newMark },
+            }));
+        } else {
+            transferStore.update((value) => {
+                const newValue = value.map((el) => {
+                    if (el.id === transfer.id) {
+                        return { ...el, mark: { ...newMark } };
+                    }
+                    return el;
+                });
+                return newValue;
             });
-            return newValue;
-        });
+        }
     }
 
     function updateStatus(newStatus) {
-        transferStore.update((value) => {
-            const newValue = value.map((el) => {
-                if (el.id === transfer.id) {
-                    return { ...el, status: { ...newStatus } };
-                }
-                return el;
+        if (isNewTransfer) {
+            newEditingTransfer.update((value) => ({
+                ...value,
+                status: { ...newStatus },
+            }));
+        } else {
+            transferStore.update((value) => {
+                const newValue = value.map((el) => {
+                    if (el.id === transfer.id) {
+                        return { ...el, status: { ...newStatus } };
+                    }
+                    return el;
+                });
+                return newValue;
             });
-            return newValue;
-        });
+        }
     }
 
     function updateSum(event) {
         const newSum = Number(event.target.value);
-        transferStore.update((value) =>
-            value.map((el) => {
-                if (el.id === transfer.id) {
-                    return { ...el, sum: newSum };
-                }
-                return el;
-            }),
-        );
+        if (isNewTransfer) {
+            newEditingTransfer.update((value) => ({
+                ...value,
+                sum: newSum,
+            }));
+        } else {
+            transferStore.update((value) =>
+                value.map((el) => {
+                    if (el.id === transfer.id) {
+                        return { ...el, sum: newSum };
+                    }
+                    return el;
+                }),
+            );
+        }
     }
 
     function updateDate(event) {
         const newDate = new Date(event.target.value).toISOString();
-        transferStore.update((value) =>
-            value.map((el) => {
-                if (el.id === transfer.id) {
-                    return { ...el, created: newDate };
-                }
-                return el;
-            }),
-        );
+        if (isNewTransfer) {
+            newEditingTransfer.update((value) => ({
+                ...value,
+                created: newDate,
+            }));
+        } else {
+            transferStore.update((value) =>
+                value.map((el) => {
+                    if (el.id === transfer.id) {
+                        return { ...el, created: newDate };
+                    }
+                    return el;
+                }),
+            );
+        }
+    }
+
+    function updateComment(event) {
+        if (isNewTransfer) {
+            newEditingTransfer.update((value) => ({
+                ...value,
+                comment: event.currentTarget.value,
+            }));
+        } else {
+            transferStore.update((value) =>
+                value.map((el) => {
+                    if (el.id === transfer.id) {
+                        return { ...el, comment: event.currentTarget.value };
+                    }
+                    return el;
+                }),
+            );
+        }
     }
 
     function updateCategories(usecat) {
-        transferStore.update((value) =>
-            value.map((el) => {
-                if (el.id === transfer.id) {
-                    const isInCat = el.cat.some((c) => c.id === usecat.id);
-                    const newCat = isInCat
-                        ? el.cat?.filter((c) => c.id != usecat.id)
-                        : [
-                              ...el.cat,
-                              {
-                                  name: usecat.name,
-                                  id: usecat.id,
-                                  isActive: usecat.isActive ?? false,
-                                  parent: usecat.parent ?? null,
-                              },
-                          ];
-                    return { ...el, cat: newCat };
-                }
-                return el;
-            }),
-        );
+        if (isNewTransfer) {
+            newEditingTransfer.update((value) => {
+                const isInCat = value.cat.some((c) => c.id === usecat.id);
+                const newCat = isInCat
+                    ? value.cat?.filter((c) => c.id != usecat.id)
+                    : [
+                          ...value.cat,
+                          {
+                              name: usecat.name,
+                              id: usecat.id,
+                              isActive: usecat.isActive ?? false,
+                              parent: usecat.parent ?? null,
+                          },
+                      ];
+                return { ...value, cat: newCat };
+            });
+        } else {
+            transferStore.update((value) =>
+                value.map((el) => {
+                    if (el.id === transfer.id) {
+                        const isInCat = el.cat.some((c) => c.id === usecat.id);
+                        const newCat = isInCat
+                            ? el.cat?.filter((c) => c.id != usecat.id)
+                            : [
+                                  ...el.cat,
+                                  {
+                                      name: usecat.name,
+                                      id: usecat.id,
+                                      isActive: usecat.isActive ?? false,
+                                      parent: usecat.parent ?? null,
+                                  },
+                              ];
+                        return { ...el, cat: newCat };
+                    }
+                    return el;
+                }),
+            );
+        }
     }
 
     function addNewElement(_, parentCategory = 0) {
@@ -174,6 +256,48 @@
 
         inputNewTem = "";
     }
+
+    function whiteNewTransfer() {
+        function er() {
+            isBlockSaved = true;
+            setTimeout(() => {
+                isBlockSaved = false;
+            }, 1000);
+        }
+
+        if (transfer.sum === 0) {
+            er();
+            return false;
+        }
+
+        if (transfer.mark === null) {
+            er();
+            return false;
+        }
+
+        if (transfer.status === null) {
+            er();
+            return false;
+        }
+
+        createTransfer();
+        startUnMount();
+
+        newEditingTransfer.set({
+            id: -1,
+            created: "",
+            status: null,
+            sum: 0,
+            mark: null,
+            cat: [],
+            comment: "",
+        });
+    }
+
+    function delTransfer() {
+        removeTransfer(transfer?.id);
+        startUnMount();
+    }
 </script>
 
 <div
@@ -192,6 +316,7 @@
     <div
         class="modal"
         class:aside-active={activeAside != null}
+        class:error-save={isBlockSaved}
         onclick={(e) => e.stopPropagation()}
         onkeydown={(e) => e.stopPropagation()}
         role="dialog"
@@ -200,7 +325,9 @@
     >
         <div class="left">
             <div class="label">transfer ID:</div>
-            <div class="trans-id">{transfer?.id}</div>
+            <div class="trans-id">
+                {transfer?.id >= 0 ? transfer?.id : "new"}
+            </div>
             <div class="label">created:</div>
             <div class="create">
                 <input
@@ -236,7 +363,21 @@
                 <button onclick={() => asideControl("cat")}><SVGList /></button>
             </div>
             <div class="label">comment:</div>
-            <textarea class="comment">{transfer?.comment}</textarea>
+            <textarea
+                class="comment"
+                value={transfer?.comment}
+                oninput={updateComment}
+            ></textarea>
+
+            {#if isNewTransfer}
+                <button class="white-new-transfer" onclick={whiteNewTransfer}
+                    >Save
+                </button>
+            {:else}
+                <button class="delete-new-transfer" onclick={delTransfer}
+                    >delete
+                </button>
+            {/if}
         </div>
 
         <div class="right">
@@ -245,7 +386,7 @@
                     {#each $allStatusStore as t (t.id)}
                         <button
                             class="point"
-                            class:active={t.id === transfer?.status.id}
+                            class:active={t.id === transfer?.status?.id}
                             onclick={() => updateStatus({ ...t })}
                             >{t.name}
                         </button>
@@ -254,7 +395,7 @@
                     {#each $allTypesStore as t (t.id)}
                         <button
                             class="point"
-                            class:active={t.id === transfer?.mark.id}
+                            class:active={t.id === transfer?.mark?.id}
                             onclick={() => updateMark({ ...t })}
                             >{t.name}
                         </button>
@@ -340,8 +481,15 @@
             display: grid;
             grid-template-columns: 1.6fr 0fr;
 
+            position: relative;
+
             &.aside-active {
                 grid-template-columns: 1.6fr 1fr;
+            }
+
+            &.error-save {
+                animation: shakeSmoothNo 600ms
+                    cubic-bezier(0.36, 0.07, 0.19, 0.97);
             }
         }
 
@@ -411,6 +559,15 @@
 
                 button {
                     @include button;
+                }
+            }
+
+            .cat {
+                max-height: 200px;
+
+                > div {
+                    height: 100%;
+                    overflow-y: auto;
                 }
             }
         }
@@ -521,6 +678,36 @@
             &:hover {
                 background-color: rgba($color: #000000, $alpha: 0.08);
             }
+        }
+
+        .white-new-transfer {
+            @include button;
+            grid-column: 1 / -1;
+        }
+    }
+
+    @keyframes shakeSmoothNo {
+        0%,
+        100% {
+            transform: translateX(0);
+        }
+        15% {
+            transform: translateX(-20px);
+        }
+        30% {
+            transform: translateX(20px);
+        }
+        45% {
+            transform: translateX(-15px);
+        }
+        60% {
+            transform: translateX(15px);
+        }
+        75% {
+            transform: translateX(-8px);
+        }
+        90% {
+            transform: translateX(5px);
         }
     }
 </style>

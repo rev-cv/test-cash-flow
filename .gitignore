@@ -68,9 +68,10 @@ env.bak/
 venv.bak/
 .venv/
 .Python
+static
 
 # pyenv
-.python-version
+# .python-version
 
 # pipenv
 Pipfile.lock

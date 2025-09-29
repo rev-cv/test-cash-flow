@@ -8,7 +8,8 @@ export function gateString(date) {
     const th = String(dt.getHours()).padStart(2, "0");
     const tm = String(dt.getMinutes()).padStart(2, "0");
 
-    return `${y}-${m}-${d} ${th}:${tm}`;
+    // return `${y}-${m}-${d} ${th}:${tm}`;
+    return `${y}-${m}-${d}`;
 }
 
 export function getDateForInput(d) {

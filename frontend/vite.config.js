@@ -5,6 +5,16 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 export default defineConfig({
     plugins: [svelte()],
     build: {
-        outDir: "../backend/dist",
+        outDir: "../backend/static",
+    },
+    // base: "/static/",
+    server: {
+        proxy: {
+            "/api": {
+                target: "http://localhost:8000",
+                changeOrigin: true,
+                secure: false,
+            },
+        },
     },
 });
