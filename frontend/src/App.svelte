@@ -1,15 +1,19 @@
 <script>
-    import { isOpenModalStore } from "./store";
+    import { isOpenTransferModalStore, isOpenFilterModalStore } from "./store";
     import Panel from "./lib/Panel.svelte";
     import Transfers from "./lib/Transfers.svelte";
     import TransferModal from "./lib/TransferModal.svelte";
+    import FilterModal from "./lib/FilterModal.svelte";
 </script>
 
 <main>
     <Panel />
     <Transfers />
-    {#if $isOpenModalStore.isMounted}
+    {#if $isOpenTransferModalStore.isMounted}
         <TransferModal />
+    {/if}
+    {#if $isOpenFilterModalStore.isMounted}
+        <FilterModal />
     {/if}
 </main>
 

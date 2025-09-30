@@ -6,7 +6,8 @@
         allCatLevelStore,
         allSortStore,
         dateFilter,
-        isOpenModalStore,
+        isOpenTransferModalStore,
+        isOpenFilterModalStore,
     } from "../store";
     import { getDateForInput } from "../utils/date";
     import { loadTransferFiters } from "../api/loadTransferFiters";
@@ -57,7 +58,7 @@
     }
 
     function openNewTransfer() {
-        isOpenModalStore.update((value) => ({
+        isOpenTransferModalStore.update((value) => ({
             ...value,
             transferID: -1,
             isMounted: true,
@@ -102,7 +103,14 @@
         svg={SVGType}
         onDelete={() => removeFilter(allTypesStore)}
         onStart={() => loadTransferFiters()}
-        onOpen={() => {}}
+        onOpen={() => {
+            console.log("ok");
+            isOpenFilterModalStore.update((value) => ({
+                typeFilter: "mark",
+                isMounted: true,
+                isView: true,
+            }));
+        }}
         isActive={isType}
     >
         <div class="scroll">
@@ -123,7 +131,13 @@
         svg={SVGStatus}
         onDelete={() => removeFilter(allStatusStore)}
         onStart={() => loadTransferFiters()}
-        onOpen={() => {}}
+        onOpen={() => {
+            isOpenFilterModalStore.update((value) => ({
+                typeFilter: "status",
+                isMounted: true,
+                isView: true,
+            }));
+        }}
         isActive={isStat}
     >
         <div class="scroll">
@@ -144,7 +158,13 @@
         svg={SVGTags}
         onDelete={() => removeFilter(allCatStore)}
         onStart={() => loadTransferFiters()}
-        onOpen={() => {}}
+        onOpen={() => {
+            isOpenFilterModalStore.update((value) => ({
+                typeFilter: "category",
+                isMounted: true,
+                isView: true,
+            }));
+        }}
         isActive={isCat}
     >
         <div class="scroll">

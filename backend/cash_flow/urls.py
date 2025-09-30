@@ -26,6 +26,9 @@ from transfer.views import (
     MarkListView,
     CategoryListView,
     TransferDeleteView,
+    AddFilterView,
+    FilterDeleteView,
+    FilterUpdateView,
 )
 
 
@@ -36,11 +39,18 @@ urlpatterns = [
     path(
         "api/transfers/<int:pk>/", TransferUpdateView.as_view(), name="transfer-update"
     ),
+    path("api/filters/add/", AddFilterView.as_view(), name="add_filter"),
     path(
         "api/transfers/delete/<int:transfer_id>/",
         TransferDeleteView.as_view(),
         name="transfer-delete",
     ),
+    path(
+        "api/filters/delete/<str:filter_type>/<int:pk>/",
+        FilterDeleteView.as_view(),
+        name="filter-delete",
+    ),
+    path("api/filters/update/", FilterUpdateView.as_view(), name="filter-update"),
     path("api/statuses/", StatusListView.as_view(), name="status-list"),
     path("api/marks/", MarkListView.as_view(), name="mark-list"),
     path("api/categories/", CategoryListView.as_view(), name="category-list"),

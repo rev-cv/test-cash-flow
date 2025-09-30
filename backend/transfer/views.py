@@ -11,6 +11,13 @@ from datetime import datetime, timedelta
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from django.utils.dateparse import parse_datetime
+from django.utils import timezone
+
+model_map = {
+    "mark": Mark,
+    "status": Status,
+    "category": Category,
+}
 
 
 class TransferListView(generics.ListAPIView):
@@ -163,7 +170,7 @@ class TransferCreateView(APIView):
         else:
             return Response({"error": "mark is required"}, status=400)
 
-        created = None
+        created = timezone.now()
         if "created" in data and data["created"]:
             created = parse_datetime(data["created"])
 
@@ -198,4 +205,94 @@ class TransferDeleteView(APIView):
     def delete(self, request, transfer_id):
         transfer = get_object_or_404(Transfer, id=transfer_id)
         transfer.delete()
-        return Response({"detail": "Transfer deleted successfully"}, status=204)
+        return Response(status=204)
+
+
+class AddFilterView(APIView):
+    def post(self, request):
+        print(request.data)
+        name = request.data.get("name")
+        t = request.data.get("t")
+
+        if not name or not t:
+            return Response({"error": "name and t are required"}, status=400)
+
+        Model = model_map.get(t)
+        if not Model:
+            return Response({"error": f"Unknown filter type: {t}"}, status=400)
+
+        # создаются разные объекты в зависимости от t
+        if t == "category":
+            parent_id = request.data.get("p")
+            parent = None
+            if parent_id:
+                parent = Category.objects.filter(id=parent_id).first()
+                if not parent:
+                    return Response(
+                        {"error": f"Parent category {parent_id} not found"}, status=400
+                    )
+
+            obj = Category.objects.create(name=name, parent=parent)
+        else:
+            obj = Model.objects.create(name=name)
+
+        return Response(
+            {
+                "id": obj.id,
+                "name": obj.name,
+                "t": t,
+                "parent": obj.parent.id if t == "category" and obj.parent else None,
+            },
+            status=201,
+        )
+
+
+class FilterDeleteView(APIView):
+    def delete(self, request, filter_type, pk):
+
+        model = model_map.get(filter_type)
+        if not model:
+            return Response(
+                {"error": f"Unsupported filter type: {filter_type}"},
+                status=400,
+            )
+
+        obj = get_object_or_404(model, pk=pk)
+
+        # Для категории: удалится и все дети (children) благодаря on_delete=models.CASCADE
+        obj.delete()
+
+        return Response({"message": f"{filter_type} {pk} deleted"}, status=200)
+
+
+class FilterUpdateView(APIView):
+    def post(self, request):
+        filter_id = request.data.get("id")
+        name = request.data.get("name")
+        filter_type = request.data.get("t")
+
+        if not filter_id or not name or not filter_type:
+            return Response(
+                {"error": "id, name и t обязательны"},
+                status=400,
+            )
+
+        model = model_map.get(filter_type)
+        if not model:
+            return Response(
+                {"error": f"Unsupported filter type: {filter_type}"},
+                status=400,
+            )
+
+        obj = get_object_or_404(model, pk=filter_id)
+        obj.name = name
+        obj.save()
+
+        return Response(
+            {
+                "message": f"{filter_type} {filter_id} updated",
+                "id": obj.id,
+                "name": obj.name,
+            },
+            status=200,
+        )

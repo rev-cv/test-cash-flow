@@ -1,6 +1,6 @@
 <script>
     import {
-        isOpenModalStore,
+        isOpenTransferModalStore,
         transferStore,
         allTypesStore,
         allStatusStore,
@@ -17,11 +17,12 @@
     import { removeTransfer } from "../api/removeTransfer";
 
     let isNewTransfer = $derived(
-        $isOpenModalStore.transferID < 0 ? true : false,
+        $isOpenTransferModalStore.transferID < 0 ? true : false,
     );
+    let isThisDeleted = $state(false);
 
     let transfer = $derived(
-        $isOpenModalStore.transferID < 0
+        $isOpenTransferModalStore.transferID < 0
             ? $newEditingTransfer
             : $currentEditingTransfer,
     );
@@ -39,19 +40,22 @@
     $effect(() => {
         // открытие модального окна
         setTimeout(() => {
-            isOpenModalStore.update((value) => ({ ...value, isView: true }));
+            isOpenTransferModalStore.update((value) => ({
+                ...value,
+                isView: true,
+            }));
             isNotMounted = true;
         }, 10);
     });
 
     $effect(() => {
         // закрытие модального окна и обновление трансфера
-        if (!$isOpenModalStore.isView && isNotMounted) {
-            if (!isNewTransfer) {
+        if (!$isOpenTransferModalStore.isView && isNotMounted) {
+            if (!isNewTransfer && !isThisDeleted) {
                 updateTransfer(transfer.id);
             }
             setTimeout(() => {
-                isOpenModalStore.update((value) => ({
+                isOpenTransferModalStore.update((value) => ({
                     ...value,
                     isMounted: false,
                 }));
@@ -60,7 +64,10 @@
     });
 
     function startUnMount() {
-        isOpenModalStore.update((value) => ({ ...value, isView: false }));
+        isOpenTransferModalStore.update((value) => ({
+            ...value,
+            isView: false,
+        }));
     }
 
     function asideControl(what) {
@@ -295,6 +302,7 @@
     }
 
     function delTransfer() {
+        isThisDeleted = true;
         removeTransfer(transfer?.id);
         startUnMount();
     }
@@ -302,7 +310,7 @@
 
 <div
     class="curtain"
-    class:render={$isOpenModalStore.isView}
+    class:render={$isOpenTransferModalStore.isView}
     onclick={startUnMount}
     onkeypress={(e) => {
         if (e.key === "Esc") {
@@ -340,17 +348,17 @@
             <div class="sum">
                 <input type="text" value={transfer?.sum} onblur={updateSum} />
             </div>
+            <div class="label">mark:</div>
+            <div class="mark">
+                <div>{transfer?.mark?.name}</div>
+                <button onclick={() => asideControl("mark")}><SVGList /></button
+                >
+            </div>
             <div class="label">status:</div>
             <div class="status">
                 <div>{transfer?.status?.name}</div>
                 <button onclick={() => asideControl("status")}
                     ><SVGList /></button
-                >
-            </div>
-            <div class="label">mark:</div>
-            <div class="mark">
-                <div>{transfer?.mark?.name}</div>
-                <button onclick={() => asideControl("mark")}><SVGList /></button
                 >
             </div>
             <div class="label">categories:</div>
@@ -680,7 +688,8 @@
             }
         }
 
-        .white-new-transfer {
+        .white-new-transfer,
+        .delete-new-transfer {
             @include button;
             grid-column: 1 / -1;
         }

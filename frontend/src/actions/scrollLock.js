@@ -1,4 +1,4 @@
-import { isOpenModalStore } from "../store";
+import { isOpenTransferModalStore, isOpenFilterModalStore } from "../store";
 
 function scrollLock(isLock) {
     // isLock == true | false
@@ -17,4 +17,5 @@ function scrollLock(isLock) {
     }
 }
 
-isOpenModalStore.subscribe((value) => scrollLock(value.isMounted));
+isOpenTransferModalStore.subscribe((value) => scrollLock(value.isMounted));
+isOpenFilterModalStore.subscribe((value) => scrollLock(value.isMounted));

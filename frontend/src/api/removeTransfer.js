@@ -7,13 +7,14 @@ export const removeTransfer = async (transferID) => {
         });
 
         if (!res.ok) {
-            const errText = await res.text();
-            throw new Error(`Ошибка: ${errText}`);
+            throw new Error(`Ошибка: удаления`);
         }
 
-        transferStore.update((value) =>
-            value.filter((el) => el.id != transferID)
-        );
+        setTimeout(() => {
+            transferStore.update((value) =>
+                value.filter((el) => el.id != transferID)
+            );
+        }, 600);
     } catch (err) {
         console.error("Ошибка:", err);
     }

@@ -48,8 +48,14 @@ export const allSortStore = writable([
     { name: "по дате", id: 2, isActive: false },
 ]);
 
-export const isOpenModalStore = writable({
+export const isOpenTransferModalStore = writable({
     transferID: null,
+    isView: false,
+    isMounted: false,
+});
+
+export const isOpenFilterModalStore = writable({
+    typeFilter: null, // "mark", "status", "category"
     isView: false,
     isMounted: false,
 });
@@ -79,7 +85,7 @@ export const transferStore = writable([
 ]);
 
 export const currentEditingTransfer = derived(
-    [transferStore, isOpenModalStore],
+    [transferStore, isOpenTransferModalStore],
     ([$transfers, $modal]) => {
         if ($modal.transferID < 0) return null;
         return $transfers.find((t) => t.id === $modal.transferID);

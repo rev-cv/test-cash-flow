@@ -1,9 +1,9 @@
 <script>
-    import { transferStore, isOpenModalStore } from "../store";
+    import { transferStore, isOpenTransferModalStore } from "../store";
     import { gateString } from "../utils/date";
 
     function openItem(tans) {
-        isOpenModalStore.update(() => ({
+        isOpenTransferModalStore.update(() => ({
             transferID: tans.id,
             isView: false,
             isMounted: true,
